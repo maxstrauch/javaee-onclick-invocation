@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+    <h:head>
+        <title>Tim-Demo</title>
+        <meta charset="UTF-8" />
+        <script type="text/javascript">
+            /* <![CDATA[ */
+            
+            function ensureButtonGroup(e, id) {
+                var childs = document.getElementsByTagName("input");
+                for (var i = 0; i < childs.length; i++) {
+                    var node = childs[i];
+                    if (node.id.indexOf(id) < 1) {
+                        continue;
+                    }
+                    if (node.tagName === "INPUT" && node.type === "checkbox") {
+                        if (node !== e && node.checked !== false) {
+                            node.checked = false;
+                            actionPerformed(node); // Inform listener
+                        }
+                    }
+                }
+            }
+
+            function actionPerformed(e) {
+                while ((e = e.nextElementSibling) !== null) {
+                    if (e.tagName === "INPUT" && e.id.indexOf("hidBtn") > 0) {
+                        e.click();
+                        return;
+                    }
+                }
+            }
+            
+            /* ]]> */
+            </script>
+    </h:head>
+    <body>
+        
+        <h:form>
+            <ul>
+                <ui:repeat value="#{dataSource.options}" var="option" varStatus="loop">
+                    <li>
+                        
+                        <!-- Ganz normale Checkbox -->
+                        <h:selectBooleanCheckbox id="theCheckBox" 
+                                                 value="#{option.selected}" 
+                                                 onclick="ensureButtonGroup(this,'theCheckBox');actionPerformed(this);" />
+
+                        <!--
+                            Nachfolgende zwei Komponenten machen zusammen mit JS
+                            die Anforderungen möglich:
+                            
+                            Der h:commandButton wird dazu verwendet via AJAX
+                            die Java-Methode aufzurufen. Da man jedoch immer
+                            eine Komponente mitgeben muss die aktualisiert wird,
+                            ist der h:outputText nötig. Dieser zeigt quasi auf
+                            die Methode die ausgeführt werden soll. Wenn der Button
+                            geklickt wird, dann wird der Wert des Feldes, welches
+                            in "execute" angegeben ist (hier die checkBox) 
+                            in den Beans aktualisiert und dann die Methode
+                            in h:outputText value ausgeführt. Beide Komponenten
+                            sind versteckt und werden vom JS aufgerufen:
+                        
+                            ensureButtonGroup(this,'theCheckBox');
+                                - Kümmert sich daraum, dass nur eine Checkbox
+                                  ausgewählt ist und wählt weitere ab. Hierbei 
+                                  wird bei Zustandsänderung der Listener aufgerufen,
+                                  damit auch in der Bean der Wert geändert wird.
+                        
+                            actionPerformed(this);
+                                - Klickt den Button an und ruft damit die Methode
+                                  auf. Die Methode kann sich darauf verlassen,
+                                  dass die Java-Objekte den aktuellsten Wert
+                                  (selected oder nicht) gesetzt haben.
+                        
+                            Achtung: diese beiden Komponenten müssen immer NACH
+                            der Checkbox im HTML stehen.
+                        -->
+                        <h:commandButton id="hidBtn" style="display: none !important;">
+                             <f:ajax execute="theCheckBox" render="output" />
+                        </h:commandButton>
+                        <h:outputText id="output" value="#{option.onClick()}" style="display: none !important;" />
+
+                        <!-- Ganz normale Textausgabe -->
+                        #{option.value}
+
+                    </li>
+                </ui:repeat>
+            </ul>
+        </h:form>
+        
+    </body>
+</html>
